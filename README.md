@@ -1,11 +1,11 @@
-# 🤖 ML Comment Analysis Service
+#  ML Comment Analysis Service
 
 A high-performance, CPU-optimized **FastAPI microservice** for analyzing user comments in real-time.  
 It generates actionable signals such as **intent, sentiment, toxicity, and spam detection**, designed for moderation systems and social platforms.
 
 ---
 
-## 🚀 Features
+##  Features
 
 -  **Multilingual Support** (English + Hinglish)
 -  **Intent Detection** (question, appreciation, complaint, spam)
@@ -23,7 +23,7 @@ It generates actionable signals such as **intent, sentiment, toxicity, and spam 
 
 ------------------------------------------------------------------------
 
-## 🧠 System Architecture
+##  System Architecture
 
               +------------------+
               |   Input Comment  |
@@ -56,7 +56,7 @@ It generates actionable signals such as **intent, sentiment, toxicity, and spam 
 
 ------------------------------------------------------------------------
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 The pipeline combines:
 
@@ -86,7 +86,7 @@ Detects:
 
 ## API Endpoints
 
-## 📡 API Endpoints
+##  API Endpoints
 ### Analyze Single Comment
 
 POST /analyze
@@ -118,15 +118,15 @@ Request:
 ------------------------------------------------------------------------
 
 ## Performance Optimizations
-🔁 LRU Cache (2048 entries) for repeated comments
-🧵 ThreadPoolExecutor (4 workers) for heavy inference
-⚙️ CPU-only execution (device = -1)
-🚀 Async FastAPI endpoints
-# 📊 Final Report
+ LRU Cache (2048 entries) for repeated comments
+ ThreadPoolExecutor (4 workers) for heavy inference
+ CPU-only execution (device = -1)
+ Async FastAPI endpoints
+#  Final Report
 
-## 🧪 Model Performance
+##  Model Performance
 
-### 🟢 Sentiment Accuracy
+###  Sentiment Accuracy
 **42.63% (8557 / 20071)**  
 
 This was the result for the previous model:  
@@ -142,32 +142,32 @@ It is particularly stronger in handling:
 
 # earlier we were using ->cardiffnlp/twitter-xlm-roberta-base-sentiment
 
-# 📊 RAW MODEL REPORT Accuracy: 29.85% (2029/6797) Time: 16.95s (0.0025s per comment)
+#  RAW MODEL REPORT Accuracy: 29.85% (2029/6797) Time: 16.95s (0.0025s per comment)
 
 # this is for finiteautomata/bertweet-base-sentiment-analysis ,
 
-# 📊 RAW MODEL REPORT Accuracy: 76.93% (5229/6797) Time: 16.44s (0.0024s per comment)
+#  RAW MODEL REPORT Accuracy: 76.93% (5229/6797) Time: 16.44s (0.0024s per comment)
 
 ---
 
-### 🔴 Toxicity Accuracy
+###  Toxicity Accuracy
 **77.81% (15617 / 20071)**
 
 ---
 
-### 🟡 Spam Accuracy
+###  Spam Accuracy
 **77.17% (15489 / 20071)**
 
 ---
 
-## ⏱️ Performance
+##  Performance
 
 - **Total Time:** 3411.46 seconds  
 - **Average:** ~0.17 seconds per comment  
 
 ---
 
-## 🔍 Confusion Analysis
+##  Confusion Analysis
 
 ### Sentiment Confusion
 - positive → neutral: 3930  
@@ -190,7 +190,7 @@ It is particularly stronger in handling:
 
 ---
 
-## ⚠️ Key Observation (Sentiment Limitation)
+##  Key Observation (Sentiment Limitation)
 
 Sentiment accuracy appears lower due to a **design decision in the pipeline**:
 
@@ -220,7 +220,7 @@ huggingface link : https://huggingface.co/spaces/lalit-narayan/youtube-comment-a
 
 ------------------------------------------------------------------------
 
-## 🔮 Future Work
+##  Future Work
 
 -   Better Hinglish fine-tuning
 -   GPU acceleration
@@ -229,4 +229,4 @@ huggingface link : https://huggingface.co/spaces/lalit-narayan/youtube-comment-a
 
 ------------------------------------------------------------------------
 
-## ⭐ Star this repo if you like it!
+##  Star this repo if you like it!
