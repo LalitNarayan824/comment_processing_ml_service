@@ -1,0 +1,218 @@
+# 🤖 ML Comment Analysis Service
+
+A high-performance, CPU-optimized **FastAPI microservice** for analyzing user comments in real-time.  
+It generates actionable signals such as **intent, sentiment, toxicity, and spam detection**, designed for moderation systems and social platforms.
+
+---
+
+## 🚀 Features
+
+-  **Multilingual Support** (English + Hinglish)
+-  **Intent Detection** (question, appreciation, complaint, spam)
+-  **Sentiment Analysis** (positive, neutral, negative)
+-  **Toxicity Detection**
+-  **Spam Detection (Hybrid System)**
+  - Rule-based + ML-based scoring
+-  **Optimized for CPU (16GB systems)**
+-  **Async + Threaded inference for speed**
+-  **LRU Cache for repeated queries**
+-  **Batch Processing Support**
+
+---
+
+
+------------------------------------------------------------------------
+
+## 🧠 System Architecture
+
+              +------------------+
+              |   Input Comment  |
+              +--------+---------+
+                       |
+                       v
+            +----------------------+
+            |   Preprocessing      |
+            +----------------------+
+                       |
+             +---------+---------+
+             |                   |
+             v                   v
+    +----------------+   +----------------------+
+    | Rule Engine    |   | ML Models            |
+    | (Spam Signals) |   | Intent, Sentiment,   |
+    |                |   | Toxicity             |
+    +--------+-------+   +----------+-----------+
+             |                      |
+             +----------+-----------+
+                        v
+              +----------------------+
+              |  Final Aggregation   |
+              +----------------------+
+                        |
+                        v
+              +----------------------+
+              | API Response (JSON)  |
+              +----------------------+
+
+------------------------------------------------------------------------
+
+## 🏗️ Architecture Overview
+
+The pipeline combines:
+
+### 1. Rule-Based System
+Detects:
+- Links (even obfuscated)
+- Handles (@username)
+- Call-to-actions (DM, join, etc.)
+- Scam keywords (earn money, crypto, etc.)
+- Adult content
+- Phone numbers
+
+### 2. ML Models
+
+| Task        | Model |
+|------------|------|
+| Intent     | `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` |
+| Sentiment  | `finiteautomata/bertweet-base-sentiment-analysis` |
+| Toxicity   | `unitary/multilingual-toxic-xlm-roberta` |
+| Spam       | `mrm8488/bert-tiny-finetuned-sms-spam-detection` |
+
+---
+
+
+------------------------------------------------------------------------
+
+## 📡 API Endpoints
+### Analyze Single Comment
+POST /analyze
+Request:
+{
+  "text": "This video is amazing bro!"
+}
+Response:
+{
+  "intent": "appreciation",
+  "intent_confidence": 0.91,
+  "labels": [
+    {"label": "appreciation", "score": 0.91}
+  ],
+  "sentiment": "positive",
+  "sentiment_confidence": 0.95,
+  "toxicity": 0.01,
+  "is_spam": false
+}
+### Batch Analysis
+POST /analyze-batch
+Request:
+[
+  {"text": "Nice video!"},
+  {"text": "Earn money fast click here"}
+]
+------------------------------------------------------------------------
+
+## Performance Optimizations
+🔁 LRU Cache (2048 entries) for repeated comments
+🧵 ThreadPoolExecutor (4 workers) for heavy inference
+⚙️ CPU-only execution (device = -1)
+🚀 Async FastAPI endpoints
+# 📊 Final Report
+
+## 🧪 Model Performance
+
+### 🟢 Sentiment Accuracy
+**42.63% (8557 / 20071)**  
+
+This was the result for the previous model:  
+`cardiffnlp/twitter-xlm-roberta-base-sentiment`
+
+We are not strictly benchmarking against the original model, but it serves as a useful reference point.  
+The newer model — `finiteautomata/bertweet-base-sentiment-analysis` — is more specialized for social media text and is expected to perform better.
+
+It is particularly stronger in handling:
+- Slang
+- Abbreviations
+- Mixed language (Hinglish)
+
+---
+
+### 🔴 Toxicity Accuracy
+**77.81% (15617 / 20071)**
+
+---
+
+### 🟡 Spam Accuracy
+**77.17% (15489 / 20071)**
+
+---
+
+## ⏱️ Performance
+
+- **Total Time:** 3411.46 seconds  
+- **Average:** ~0.17 seconds per comment  
+
+---
+
+## 🔍 Confusion Analysis
+
+### Sentiment Confusion
+- positive → neutral: 3930  
+- neutral → negative: 1758  
+- positive → negative: 830  
+- negative → neutral: 474  
+- neutral → positive: 453  
+
+---
+
+### Toxicity Confusion
+- toxic (1) → non-toxic (0): 321  
+- non-toxic (0) → toxic (1): 153  
+
+---
+
+### Spam Confusion
+- spam (1) → not spam (0): 375  
+- not spam (0) → spam (1): 227  
+
+---
+
+## ⚠️ Key Observation (Sentiment Limitation)
+
+Sentiment accuracy appears lower due to a **design decision in the pipeline**:
+
+When a comment is confidently classified as spam, the system skips all ML models and directly returns:
+
+```python
+if spam_result["is_spam"]:
+    return {
+        "intent": "spam",
+        "intent_confidence": 1.0,
+        "labels": [{"label": "spam", "score": 1.0}],
+        "sentiment": "neutral",
+        "sentiment_confidence": 1.0,
+        "toxicity": 0.0,
+        "is_spam": True
+    }
+
+for now we didnt had any data to test the accuracy of intent , we are currently building a suitable dataset for that , we apolozise for that    
+
+------------------------------------------------------------------------
+
+we have currently hosted this at huggingface , you can too just make a space and add the app.py , dockerfile and requirements.txt
+
+------------------------------------------------------------------------
+
+huggingface link : https://huggingface.co/spaces/lalit-narayan/youtube-comment-analyzer
+
+------------------------------------------------------------------------
+
+## 🔮 Future Work
+
+-   Better Hinglish fine-tuning
+-   GPU acceleration
+-   Dashboard UI
+-   Streaming inference
+
+------------------------------------------------------------------------
+
+## ⭐ Star this repo if you like it!
