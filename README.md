@@ -83,9 +83,14 @@ Detects:
 
 ------------------------------------------------------------------------
 
+/*************  ✨ Windsurf Command 🌟  *************/
+## API Endpoints
+
 ## 📡 API Endpoints
 ### Analyze Single Comment
+
 POST /analyze
+
 Request:
 {
   "text": "This video is amazing bro!"
@@ -109,6 +114,7 @@ Request:
   {"text": "Nice video!"},
   {"text": "Earn money fast click here"}
 ]
+
 ------------------------------------------------------------------------
 
 ## Performance Optimizations
@@ -133,6 +139,14 @@ It is particularly stronger in handling:
 - Slang
 - Abbreviations
 - Mixed language (Hinglish)
+
+# earlier we were using ->cardiffnlp/twitter-xlm-roberta-base-sentiment
+
+# 📊 RAW MODEL REPORT Accuracy: 29.85% (2029/6797) Time: 16.95s (0.0025s per comment)
+
+# this is for finiteautomata/bertweet-base-sentiment-analysis ,
+
+# 📊 RAW MODEL REPORT Accuracy: 76.93% (5229/6797) Time: 16.44s (0.0024s per comment)
 
 ---
 
