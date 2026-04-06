@@ -18,7 +18,7 @@ It generates actionable signals such as **intent, sentiment, toxicity, and spam 
 -  **LRU Cache for repeated queries**
 -  **Batch Processing Support**
 
----
+
 
 
 ------------------------------------------------------------------------
@@ -78,12 +78,12 @@ Detects:
 | Toxicity   | `unitary/multilingual-toxic-xlm-roberta` |
 | Spam       | `mrm8488/bert-tiny-finetuned-sms-spam-detection` |
 
----
+
 
 
 ------------------------------------------------------------------------
 
-/*************  ✨ Windsurf Command 🌟  *************/
+
 ## API Endpoints
 
 ## 📡 API Endpoints
