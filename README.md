@@ -1,7 +1,7 @@
 #  ML Comment Analysis Service
 
-A high-performance, CPU-optimized **FastAPI microservice** for analyzing user comments in real-time.  
-It generates actionable signals such as **intent, sentiment, toxicity, and spam detection**, designed for moderation systems and social platforms.
+A **FastAPI microservice** for analyzing user comments in real-time.  
+It generates actionable signals such as **intent, sentiment, toxicity, and spam detection**, designed for moderation systems and social platforms. 
 
 ---
 
