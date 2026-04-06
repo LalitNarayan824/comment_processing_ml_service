@@ -33,6 +33,13 @@ sent_pipe = pipeline(
     device=device
 )
 
+# Spam: Lightweight BERT-Tiny
+spam_pipe = pipeline(
+    "text-classification",
+    model="mrm8488/bert-tiny-finetuned-sms-spam-detection",
+    device=device
+)
+
 # --- SCHEMAS (According to Design Doc) ---
 
 class CommentInput(BaseModel):
@@ -49,6 +56,7 @@ class AnalysisResponse(BaseModel):
     sentiment: str
     sentiment_confidence: float
     toxicity: float
+    is_spam: bool
 
 # --- PREPROCESSING (Internal Only) ---
 
@@ -59,6 +67,52 @@ def preprocess_text(text: str) -> str:
     return text
 
 # --- INFERENCE CORE ---
+import re
+
+def rule_signals(text: str):
+    text_lower = text.lower()
+
+    has_link = "http" in text_lower or "www" in text_lower
+
+    promo_keywords = ["subscribe", "check my channel", "follow me", "watch my video"]
+    has_promo = any(word in text_lower for word in promo_keywords)
+
+    has_phone = bool(re.search(r"\d{8,}", text))
+
+    scam_keywords = ["free", "money", "earn", "prize", "winner", "telegram", "whatsapp"]
+    has_scam = any(word in text_lower for word in scam_keywords)
+
+    return has_link, has_promo, has_phone, has_scam
+
+def get_spam_score(text: str) -> float:
+    result = spam_pipe(text)[0]
+
+    if result["label"] == "spam":
+        return result["score"]
+    else:
+        return 1 - result["score"]
+
+
+def detect_spam(text: str) -> bool:
+    spam_score = get_spam_score(text)
+    has_link, has_promo, has_phone, has_scam = rule_signals(text)
+
+    # Strong rule signals
+    if has_link and has_promo:
+        return True
+
+    if has_phone:
+        return True
+
+    # Strong ML confidence
+    if spam_score > 0.85:
+        return True
+
+    # Medium ML + suspicious signals
+    if spam_score > 0.6 and (has_promo or has_scam):
+        return True
+
+    return False
 
 @lru_cache(max_size=2000)
 def get_model_outputs(cleaned_text: str) -> Dict:
@@ -72,6 +126,9 @@ def get_model_outputs(cleaned_text: str) -> Dict:
     # 3. Toxicity Detection
     tox_res = tox_pipe(cleaned_text)[0]
 
+    # 4. Spam (NEW)
+    is_spam = detect_spam(cleaned_text)
+
     return {
         "intent": intent_res["labels"][0],
         "intent_confidence": round(intent_res["scores"][0], 3),
@@ -81,7 +138,8 @@ def get_model_outputs(cleaned_text: str) -> Dict:
         ],
         "sentiment": sent_res["label"].lower(),
         "sentiment_confidence": round(sent_res["score"], 3),
-        "toxicity": round(tox_res["score"], 3)
+        "toxicity": round(tox_res["score"], 3),
+        "is_spam": is_spam
     }
 
 # --- ENDPOINTS ---
@@ -114,3 +172,5 @@ async def analyze_batch(data: List[CommentInput]):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=7860)
+
+    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
