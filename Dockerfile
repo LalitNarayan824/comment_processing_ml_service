@@ -3,6 +3,10 @@ WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY . .
-# Pre-download models to bake them into the image (optional but recommended)
-RUN python -c "from transformers import pipeline; pipeline('zero-shot-classification', model='MoritzLaurer/mDeBERTa-v3-base-mnli-xnli'); pipeline('text-classification', model='unitary/multilingual-toxic-xlm-roberta'); pipeline('sentiment-analysis', model='cardiffnlp/twitter-xlm-roberta-base-sentiment')"
+# Pre-download all 4 public models during the build phase
+RUN python -c "from transformers import pipeline; \
+pipeline('text-classification', model='lalit-narayan/youtube-comment-intent-classifier'); \
+pipeline('text-classification', model='martin-ha/toxic-comment-model'); \
+pipeline('sentiment-analysis', model='AmaanP314/youtube-xlm-roberta-base-sentiment-multilingual'); \
+pipeline('text-classification', model='valurank/distilroberta-spam-comments-detection')"
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
