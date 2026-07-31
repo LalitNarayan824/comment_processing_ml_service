@@ -9,4 +9,4 @@ pipeline('text-classification', model='lalit-narayan/youtube-comment-intent-clas
 pipeline('text-classification', model='martin-ha/toxic-comment-model'); \
 pipeline('sentiment-analysis', model='AmaanP314/youtube-xlm-roberta-base-sentiment-multilingual'); \
 pipeline('text-classification', model='valurank/distilroberta-spam-comments-detection')"
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
