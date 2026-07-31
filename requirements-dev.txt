@@ -1,0 +1,6 @@
+# Dev / evaluation-only dependencies
+pandas
+requests
+pytest
+jupyter
+httpx
