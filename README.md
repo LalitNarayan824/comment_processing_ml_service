@@ -3,20 +3,58 @@
 A **FastAPI microservice** for analyzing user comments in real-time.  
 It generates actionable signals such as **intent, sentiment, toxicity, and spam detection**, designed for moderation systems and social platforms. 
 
+🔗 **Hugging Face Space Link:** [lalit-narayan/youtube-comment-analyzer](https://huggingface.co/spaces/lalit-narayan/youtube-comment-analyzer)
+
+🔗 **Hugging FaceDataset Link:** [lalit-narayan/youtube-comments-intent-sentiment](https://huggingface.co/datasets/lalit-narayan/youtube-comments-intent-sentiment)
+
 ---
 
 ##  Features
 
 - **Multilingual Support** (English + Hinglish)
-- **Intent Detection** (question, appreciation, complaint, spam)
+- **Intent Detection** (question, appreciation, complaint)
 - **Sentiment Analysis** (positive, neutral, negative)
-- **Toxicity Detection**
+- **Toxicity Detection** (blocklist + ML)
 - **Spam Detection (Hybrid System)**
   - Rule-based + ML-based scoring
 - **Optimized for CPU** (16GB systems)
 - **Async + Threaded inference** for speed
 - **LRU Cache** for repeated queries
 - **Batch Processing Support**
+
+---
+
+## 📁 Project Structure
+
+```
+comment_processing_ml_service/
+├── app/
+│   ├── main.py              # FastAPI app + endpoints
+│   ├── models.py            # Pydantic schemas (CommentInput, AnalysisResponse)
+│   ├── pipeline.py          # get_heavy_predictions, model loading
+│   ├── spam.py              # rule_signals, is_comment_spam
+│   ├── toxicity.py          # is_toxic, Aho-Corasick init
+│   └── config.py            # env vars, model names, thresholds
+├── data/
+│   ├── blocklist.txt
+│   └── README.md            # documents dataset schema/source
+├── scripts/
+│   └── csv_cleaner.py
+├── notebooks/
+│   └── *.ipynb              # training & evaluation notebooks
+├── tests/
+│   ├── test_spam.py
+│   ├── test_toxicity.py
+│   └── test_api.py
+├── .github/workflows/ci.yml
+├── .gitignore
+├── .env.example
+├── LICENSE
+├── Dockerfile
+├── requirements.txt
+├── requirements-dev.txt     # pandas, requests, pytest, jupyter — dev/eval-only deps
+└── README.md
+```
 
 ---
 
@@ -67,15 +105,16 @@ Detects:
 - Scam keywords (earn money, crypto, etc.)
 - Adult content
 - Phone numbers
+- Repetitive text
 
 ### 2. ML Models
 
 | Task | Model |
 |------|-------|
-| **Intent** | `MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli` |
-| **Sentiment** | `finiteautomata/bertweet-base-sentiment-analysis` |
-| **Toxicity** | `unitary/multilingual-toxic-xlm-roberta` |
-| **Spam** | `mrm8488/bert-tiny-finetuned-sms-spam-detection` |
+| **Intent** | `lalit-narayan/youtube-comment-intent-classifier` (fine-tuned MiniLM) |
+| **Sentiment** | `AmaanP314/youtube-xlm-roberta-base-sentiment-multilingual` |
+| **Toxicity** | `martin-ha/toxic-comment-model` |
+| **Spam** | `valurank/distilroberta-spam-comments-detection` |
 
 ---
 
@@ -97,12 +136,9 @@ Detects:
 {
   "intent": "appreciation",
   "intent_confidence": 0.91,
-  "labels": [
-    {"label": "appreciation", "score": 0.91}
-  ],
   "sentiment": "positive",
   "sentiment_confidence": 0.95,
-  "toxicity": 0.01,
+  "toxicity": false,
   "is_spam": false
 }
 ```
@@ -119,6 +155,10 @@ Detects:
 ]
 ```
 
+### Health Check
+
+**`GET /health`** → `{"status": "healthy", "device": "CPU"}`
+
 ---
 
 ##  Performance Optimizations
@@ -130,38 +170,43 @@ Detects:
 
 ---
 
-##  Final Report
+##  Benchmarks & Evaluation
 
-### Model Performance
+### Intent Model Training
 
-#### Sentiment Accuracy
-**42.63% (8557 / 20071)**
+Fine-tuned `microsoft/Multilingual-MiniLM-L12-H384` on ~50K YouTube comments (4 classes: appreciation, question, complaint, spam).
 
-> **Note:** The previous model used was `cardiffnlp/twitter-xlm-roberta-base-sentiment`. We are not strictly benchmarking against the original model, but it serves as a useful reference point. The newer model — `finiteautomata/bertweet-base-sentiment-analysis` — is more specialized for social media text and is expected to perform better.
+| Epoch | Train Loss | Val Loss | Accuracy | F1 | Precision | Recall |
+|-------|-----------|----------|----------|------|-----------|--------|
+| 1 | 0.641 | 0.601 | 75.72% | 75.75% | 77.92% | 75.72% |
+| 2 | 0.522 | 0.546 | 78.22% | 78.09% | 78.17% | 78.22% |
+| 3 | 0.433 | 0.572 | 77.05% | 76.70% | 77.08% | 77.05% |
+| 4 | 0.353 | 0.631 | 77.90% | 77.73% | 77.59% | 77.90% |
+| **5** | **0.290** | **0.632** | **78.43%** | **78.33%** | **78.28%** | **78.43%** |
 
-It is particularly stronger in handling:
+> Published as [`lalit-narayan/youtube-comment-intent-classifier`](https://huggingface.co/lalit-narayan/youtube-comment-intent-classifier) on Hugging Face.
+
+### System-Level Evaluation (End-to-End API)
+
+Evaluated on 20,071 labeled YouTube comments via the hosted API:
+
+| Metric | Accuracy |
+|--------|----------|
+| **Sentiment** | 42.63% (8,557 / 20,071) |
+| **Toxicity** | 77.81% (15,617 / 20,071) |
+| **Spam** | 77.17% (15,489 / 20,071) |
+
+- **Total Time:** `3411.46 seconds`
+- **Average:** `~0.17 seconds` per comment
+
+### Sentiment Model Notes
+
+The current model is `AmaanP314/youtube-xlm-roberta-base-sentiment-multilingual`. It is particularly strong in handling:
 - Slang
 - Abbreviations
 - Mixed language (Hinglish)
 
-**Comparisons:**
-- **Previous Model** (`cardiffnlp/twitter-xlm-roberta-base-sentiment`):  
-  RAW MODEL REPORT Accuracy: `29.85% (2029/6797)` | Time: `16.95s` (0.0025s per comment)
-- **Current Model** (`finiteautomata/bertweet-base-sentiment-analysis`):  
-  RAW MODEL REPORT Accuracy: `76.93% (5229/6797)` | Time: `16.44s` (0.0024s per comment)
-
-#### Toxicity Accuracy
-**77.81% (15617 / 20071)**
-
-#### Spam Accuracy
-**77.17% (15489 / 20071)**
-
----
-
-### Overall System Performance
-
-- **Total Time:** `3411.46 seconds`
-- **Average:** `~0.17 seconds` per comment
+> **Note:** Sentiment accuracy appears lower due to a design decision — when a comment is classified as spam, the system skips ML models and returns a default `"neutral"` sentiment. This inflates false mismatches in the evaluation.
 
 ---
 
@@ -184,34 +229,17 @@ It is particularly stronger in handling:
 
 ---
 
-##  Key Observation (Sentiment Limitation)
-
-Sentiment accuracy appears lower due to a **design decision in the pipeline**:
-
-When a comment is confidently classified as spam, the system skips all ML models and directly returns:
-
-```python
-if spam_result["is_spam"]:
-    return {
-        "intent": "spam",
-        "intent_confidence": 1.0,
-        "labels": [{"label": "spam", "score": 1.0}],
-        "sentiment": "neutral",
-        "sentiment_confidence": 1.0,
-        "toxicity": 0.0,
-        "is_spam": True
-    }
-```
-
-> **Note:** For now we didn't have any data to test the accuracy of intent. We are currently building a suitable dataset for that, we apologize for that.
-
----
-
 ##  Deployment
 
-We have currently hosted this at Hugging Face. You can too just make a space and add the `app.py`, `Dockerfile`, and `requirements.txt`.
+Currently hosted on Hugging Face Spaces. The app runs via:
 
-🔗 **Hugging Face Link:** [lalit-narayan/youtube-comment-analyzer](https://huggingface.co/spaces/lalit-narayan/youtube-comment-analyzer)
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 7860
+```
+
+To deploy, push the repo (with `app/`, `data/`, `Dockerfile`, and `requirements.txt`) to a Hugging Face Space.
+
+
 
 ---
 
